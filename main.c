@@ -11,6 +11,7 @@
  *
  * Return: pointer to the start of the trimmed string
  */
+
 char *trim_line(char *line)
 {
 	char *start;
@@ -41,12 +42,13 @@ char *trim_line(char *line)
 int main(void)
 {
 	char *line;
-	char *command;
-	char *argv[2];
+	char *argv[64];
+	char *token;
 	size_t len;
 	ssize_t read;
 	pid_t child_pid;
 	int status;
+	int i;
 
 	line = NULL;
 	len = 0;
@@ -68,13 +70,18 @@ int main(void)
 		if (line[read - 1] == '\n')
 			line[read - 1] = '\0';
 
-		command = trim_line(line);
+		i = 0;
+		token = strtok(line, " \t");
+		while (token != NULL && i < 63)
+		{
+			argv[i] = token;
+			i++;
+			token = strtok(NULL, " \t");
+		}
+		argv[i] = NULL;
 
-		if (command[0] == '\0')
+		if (argv[0] == NULL)
 			continue;
-
-		argv[0] = command;
-		argv[1] = NULL;
 
 		child_pid = fork();
 		if (child_pid == -1)
