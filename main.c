@@ -130,6 +130,12 @@ int main(int argc, char *argv[])
 		if (cmd_argv[0] == NULL)
 			continue;
 
+		if (strcmp(cmd_argv[0], "exit") == 0)
+		{
+			free(line);
+			exit(last_status);
+		}
+
 		full_path = find_command(cmd_argv[0]);
 		if (full_path == NULL)
 		{
