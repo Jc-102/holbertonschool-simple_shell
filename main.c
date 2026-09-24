@@ -25,12 +25,14 @@ int main(void)
 
 	while (1)
 	{
-		printf("($) ");
+		if (isatty(STDIN_FILENO))
+			printf("($) ");
 
 		read = getline(&line, &len, stdin);
 		if (read == -1)
 		{
-			printf("\n");
+			if (isatty(STDIN_FILENO))
+				printf("\n");
 			free(line);
 			exit(0);
 		}
