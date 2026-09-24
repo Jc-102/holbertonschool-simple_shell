@@ -9,8 +9,7 @@
  * find_command - searches PATH for an executable command
  * @command: the command name to search for
  *
- * Return: a malloc'ed full path to the command if found,
- * or NULL if not found
+ * Return: a malloc'ed full path to the command if found, or NULL
  */
 
 char *find_command(char *command)
@@ -38,7 +37,7 @@ char *find_command(char *command)
 		}
 	}
 
-	if (path_env == NULL)
+	if (path_env == NULL || path_env[0] == '\0')
 		return (NULL);
 
 	path_copy = strdup(path_env);
@@ -73,14 +72,16 @@ char *find_command(char *command)
 
 /**
  * main - entry point for the simple shell
+ * @argc: argument count (unused)
+ * @argv: argument vector, argv[0] is the shell's own name
  *
- * Return: 0 on success
+ * Return: exit status of the last command run
  */
 
-int main(void)
+int main(int argc, char *argv[])
 {
 	char *line;
-	char *argv[64];
+	char *cmd_argv[64];
 	char *token;
 	char *full_path;
 	size_t len;
@@ -88,9 +89,14 @@ int main(void)
 	pid_t child_pid;
 	int status;
 	int i;
+	unsigned int line_number;
+	int last_status;
 
+	(void)argc;
 	line = NULL;
 	len = 0;
+	line_number = 0;
+	last_status = 0;
 
 	while (1)
 	{
@@ -98,12 +104,14 @@ int main(void)
 			printf("($) ");
 
 		read = getline(&line, &len, stdin);
+		line_number++;
+
 		if (read == -1)
 		{
 			if (isatty(STDIN_FILENO))
 				printf("\n");
 			free(line);
-			exit(0);
+			exit(last_status);
 		}
 
 		if (line[read - 1] == '\n')
@@ -113,19 +121,21 @@ int main(void)
 		token = strtok(line, " \t");
 		while (token != NULL && i < 63)
 		{
-			argv[i] = token;
+			cmd_argv[i] = token;
 			i++;
 			token = strtok(NULL, " \t");
 		}
-		argv[i] = NULL;
+		cmd_argv[i] = NULL;
 
-		if (argv[0] == NULL)
+		if (cmd_argv[0] == NULL)
 			continue;
 
-		full_path = find_command(argv[0]);
+		full_path = find_command(cmd_argv[0]);
 		if (full_path == NULL)
 		{
-			fprintf(stderr, "%s: not found\n", argv[0]);
+			fprintf(stderr, "%s: %u: %s: not found\n",
+					argv[0], line_number, cmd_argv[0]);
+			last_status = 127;
 			continue;
 		}
 
@@ -139,7 +149,7 @@ int main(void)
 
 		if (child_pid == 0)
 		{
-			execve(full_path, argv, environ);
+			execve(full_path, cmd_argv, environ);
 			perror("Error");
 			free(full_path);
 			exit(1);
@@ -148,6 +158,8 @@ int main(void)
 		{
 			wait(&status);
 			free(full_path);
+			if (WIFEXITED(status))
+				last_status = WEXITSTATUS(status);
 		}
 	}
 
