@@ -6,6 +6,33 @@
 #include <unistd.h>
 
 /**
+ * trim_line - removes leading and trailing whitespace from a string
+ * @line: the string to trim, modified in place
+ *
+ * Return: pointer to the start of the trimmed string
+ */
+char *trim_line(char *line)
+{
+	char *start;
+	char *end;
+
+	start = line;
+	while (*start == ' ' || *start == '\t')
+		start++;
+
+	if (*start == '\0')
+		return (start);
+
+	end = start + strlen(start) - 1;
+	while (end > start && (*end == ' ' || *end == '\t'))
+		end--;
+
+	*(end + 1) = '\0';
+
+	return (start);
+}
+
+/**
  * main - entry point for the simple shell
  *
  * Return: 0 on success
@@ -14,6 +41,7 @@
 int main(void)
 {
 	char *line;
+	char *command;
 	char *argv[2];
 	size_t len;
 	ssize_t read;
@@ -40,7 +68,12 @@ int main(void)
 		if (line[read - 1] == '\n')
 			line[read - 1] = '\0';
 
-		argv[0] = line;
+		command = trim_line(line);
+
+		if (command[0] == '\0')
+			continue;
+
+		argv[0] = command;
 		argv[1] = NULL;
 
 		child_pid = fork();
