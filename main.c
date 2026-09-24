@@ -6,31 +6,69 @@
 #include <unistd.h>
 
 /**
- * trim_line - removes leading and trailing whitespace from a string
- * @line: the string to trim, modified in place
+ * find_command - searches PATH for an executable command
+ * @command: the command name to search for
  *
- * Return: pointer to the start of the trimmed string
+ * Return: a malloc'ed full path to the command if found,
+ * or NULL if not found
  */
 
-char *trim_line(char *line)
+char *find_command(char *command)
 {
-	char *start;
-	char *end;
+	char *path_env;
+	char *path_copy;
+	char *dir;
+	char *full_path;
+	int i;
 
-	start = line;
-	while (*start == ' ' || *start == '\t')
-		start++;
+	if (strchr(command, '/') != NULL)
+	{
+		if (access(command, X_OK) == 0)
+			return (strdup(command));
+		return (NULL);
+	}
 
-	if (*start == '\0')
-		return (start);
+	path_env = NULL;
+	for (i = 0; environ[i] != NULL; i++)
+	{
+		if (strncmp(environ[i], "PATH=", 5) == 0)
+		{
+			path_env = environ[i] + 5;
+			break;
+		}
+	}
 
-	end = start + strlen(start) - 1;
-	while (end > start && (*end == ' ' || *end == '\t'))
-		end--;
+	if (path_env == NULL)
+		return (NULL);
 
-	*(end + 1) = '\0';
+	path_copy = strdup(path_env);
+	if (path_copy == NULL)
+		return (NULL);
 
-	return (start);
+	dir = strtok(path_copy, ":");
+	while (dir != NULL)
+	{
+		full_path = malloc(strlen(dir) + strlen(command) + 2);
+		if (full_path == NULL)
+		{
+			free(path_copy);
+			return (NULL);
+		}
+
+		sprintf(full_path, "%s/%s", dir, command);
+
+		if (access(full_path, X_OK) == 0)
+		{
+			free(path_copy);
+			return (full_path);
+		}
+
+		free(full_path);
+		dir = strtok(NULL, ":");
+	}
+
+	free(path_copy);
+	return (NULL);
 }
 
 /**
@@ -44,6 +82,7 @@ int main(void)
 	char *line;
 	char *argv[64];
 	char *token;
+	char *full_path;
 	size_t len;
 	ssize_t read;
 	pid_t child_pid;
@@ -83,24 +122,32 @@ int main(void)
 		if (argv[0] == NULL)
 			continue;
 
+		full_path = find_command(argv[0]);
+		if (full_path == NULL)
+		{
+			fprintf(stderr, "%s: not found\n", argv[0]);
+			continue;
+		}
+
 		child_pid = fork();
 		if (child_pid == -1)
 		{
 			perror("Error");
+			free(full_path);
 			continue;
 		}
 
 		if (child_pid == 0)
 		{
-			if (execve(argv[0], argv, environ) == -1)
-			{
-				perror("Error");
-				exit(1);
-			}
+			execve(full_path, argv, environ);
+			perror("Error");
+			free(full_path);
+			exit(1);
 		}
 		else
 		{
 			wait(&status);
+			free(full_path);
 		}
 	}
 
