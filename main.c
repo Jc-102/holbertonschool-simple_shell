@@ -14,6 +14,7 @@
 int main(void)
 {
 	char *line;
+	char *argv[2];
 	size_t len;
 	ssize_t read;
 	pid_t child_pid;
@@ -37,6 +38,9 @@ int main(void)
 		if (line[read - 1] == '\n')
 			line[read - 1] = '\0';
 
+		argv[0] = line;
+		argv[1] = NULL;
+
 		child_pid = fork();
 		if (child_pid == -1)
 		{
@@ -46,7 +50,7 @@ int main(void)
 
 		if (child_pid == 0)
 		{
-			if (execve(line, &line, environ) == -1)
+			if (execve(argv[0], argv, environ) == -1)
 			{
 				perror("Error");
 				exit(1);
