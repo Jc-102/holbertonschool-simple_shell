@@ -11,7 +11,6 @@
  *
  * Return: a malloc'ed full path to the command if found, or NULL
  */
-
 char *find_command(char *command)
 {
 	char *path_env;
@@ -71,13 +70,23 @@ char *find_command(char *command)
 }
 
 /**
+ * print_env - prints the current environment, one variable per line
+ */
+void print_env(void)
+{
+	int i;
+
+	for (i = 0; environ[i] != NULL; i++)
+		printf("%s\n", environ[i]);
+}
+
+/**
  * main - entry point for the simple shell
  * @argc: argument count (unused)
  * @argv: argument vector, argv[0] is the shell's own name
  *
  * Return: exit status of the last command run
  */
-
 int main(int argc, char *argv[])
 {
 	char *line;
@@ -134,6 +143,12 @@ int main(int argc, char *argv[])
 		{
 			free(line);
 			exit(last_status);
+		}
+
+		if (strcmp(cmd_argv[0], "env") == 0)
+		{
+			print_env();
+			continue;
 		}
 
 		full_path = find_command(cmd_argv[0]);
