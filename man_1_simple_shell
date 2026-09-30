@@ -1,0 +1,70 @@
+.TH SIMPLE_SHELL 1 "September 2026" "hsh 1.0" "User Commands"
+.SH NAME
+hsh \- simple UNIX command line interpreter
+.SH SYNOPSIS
+.B hsh
+.br
+.B hsh
+[command_file]
+.SH DESCRIPTION
+.B hsh
+is a simplified clone of the shell. It reads commands, finds them either
+directly (a path containing a
+.B /
+) or by searching the
+.B PATH
+environment variable, and executes them in a child process.
+.PP
+When standard input is a terminal,
+.B hsh
+runs in interactive mode: it prints a
+.B ($)
+prompt before reading each line. When standard input is not a terminal
+(for example, when it is piped or redirected from a file),
+.B hsh
+runs in non-interactive mode and prints no prompt, matching the behavior
+of
+.BR sh (1).
+.SH BUILTIN COMMANDS
+.TP
+.B exit
+Exits the shell. The shell's exit status is that of the last command run.
+.TP
+.B env
+Prints the current environment, one variable per line.
+.SH EXIT STATUS
+.B hsh
+exits with the exit status of the last command it executed. If a command
+is not found, the exit status is 127.
+.SH EXAMPLES
+Run interactively:
+.PP
+.nf
+.RS
+$ ./hsh
+($) /bin/ls
+($) exit
+.RE
+.fi
+.PP
+Run a single command non-interactively:
+.PP
+.nf
+.RS
+$ echo "/bin/ls" | ./hsh
+.RE
+.fi
+.PP
+Run a script of commands:
+.PP
+.nf
+.RS
+$ ./hsh < commands_file
+.RE
+.fi
+.SH AUTHOR
+Written by Jean Carlos Jimenez Nevarez.
+.SH SEE ALSO
+.BR sh (1),
+.BR execve (2),
+.BR fork (2)
